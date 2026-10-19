@@ -11,6 +11,8 @@ const EVENT_KEY = 'eve';
 const EVENT_KEY_BEACON = 'beacon';
 const USER_ID = 'test-user' + Math.random();
 
+let decision = undefined;
+
 const optimizely = createInstance({
   projectConfigManager: createPollingProjectConfigManager({
     sdkKey: SDK_KEY,
@@ -29,7 +31,7 @@ optimizely
   .then(() => {
     status.textContent = 'Optimizely ready. Page load event tracked.';
     const user = optimizely.createUserContext(USER_ID);
-    const decision = user.decide('beacon_test');
+    decision = user.decide('beacon_test');
     console.log(decision.variationKey);
     optimizely.track(EVENT_KEY, USER_ID, undefined, { source: 'page_load' });
   })
@@ -40,5 +42,8 @@ optimizely
 document.querySelector('#google-link').addEventListener('click', () => {
   // The event is queued in the batch processor. On navigation, the SDK closes
   // itself on `pagehide` and flushes queued events using navigator.sendBeacon.
-  optimizely.track(EVENT_KEY_BEACON, USER_ID, undefined, { source: 'link_click' });
+  if (decision.enabled) {
+    console.log('enabled, sending conversion >>');
+    optimizely.track(EVENT_KEY_BEACON, USER_ID, undefined, { source: 'link_click' }); 
+  }
 });
